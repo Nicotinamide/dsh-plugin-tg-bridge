@@ -68,14 +68,12 @@ dsh web   # 或你的启动脚本
 | `/sessions` | 列出所有会话（标题 + 状态 + 模式；管理员含 Web 端会话并标来源） |
 | `/use <编号\|ID\|标题\|new>` | 切换 / 新建会话（标题关键字模糊匹配，多匹配列候选；`/use new` 先弹模式选择，创建即定模式） |
 | `/models` | 列出模型 + 当前选择与推理强度 |
-| `/model <编号>` | 切换当前会话模型（保留推理强度） |
-| `/mode` | 查看当前会话模式（按钮切换：标准/创造/PTC/极简等） |
-| `/mode <编号\|id>` | 直接切换当前会话模式（`agentPreset.select`，新一轮生效） |
+| `/model <编号>` | 切换当前会话模型（弹窗选择推理强度，不会静默丢失） |
 | `/rename <新标题>` | 重命名当前会话（`session.rename`） |
 | `/effort` | 按钮修改推理强度 |
 | `/permission` | 按钮切换当前会话权限预设 |
 | `/permission default <name>` | 修改全局默认权限 |
-| `/status` | 在线状态、token、缓存、上下文占用、回合统计 |
+| `/status` | 在线状态、模型/模式、token、缓存、上下文占用、回合统计 |
 | `/users` | 授权列表（仅管理员） |
 | `/grant <chatId>` | 添加用户/群组（仅管理员；群里直接 `/grant` 授权当前群） |
 | `/revoke <chatId>` | 移除授权（仅管理员） |
@@ -105,7 +103,7 @@ lib/client.js    持久 GUI 卡片（__ModuleLoader__ 格式，双语，重启�
 
 ### 多用户（已实现）
 
-一个 bot 服务多个 chat：`allowedUsers` 列出允许的 chat id（`label` 仅作显示），每个 chat 有自己独立的会话空间（`perUserSessions`）；管理员 `adminChatIds` 能看到/操作所有用户的会话。群组（chat id 为负）同样支持：只响应 @bot 提及或回复 bot 的消息，忽略 bot 自己的消息，群组整体绑定自己的会话空间。
+一个 bot 服务多个 chat：`allowedUsers` 列出允许的 chat id（`label` 仅作显示），每个 chat 有自己独立的会话空间（`perUserSessions`）；管理员 `adminChatIds` 能看到/操作所有用户的会话。群组（chat id 为负）同样支持：只响应 @bot 提及或回复 bot 的消息，忽略 bot 自己的消息，群组整体绑定自己的会话空间。**群组为"只读 + 提问"白名单**：群里只能发普通消息提问、`/start`、`/status`、`/help`（精简版），其余命令一律提示「请私聊使用」——群成员无法改动群组共享会话的模型/权限/强度/标题。
 
 ### 按钮归属（已实现）
 
@@ -120,15 +118,15 @@ lib/client.js    持久 GUI 卡片（__ModuleLoader__ 格式，双语，重启�
 - `/revoke <chatId>` 移除授权（不能移除自己或最后一个管理员，防止锁死）；
 - `/admin [off] <chatId>` 设置/取消管理员（设为管理员会自动授权该 chat）。
 
-未授权用户在私聊发 `/start` 会收到自己的 Chat ID，并提示发给管理员开通；其他未授权消息保持静默（日志记录）。`/help` 按角色差异化：管理员看到全部命令（含管理命令与 `/restart`），普通用户只看到日常命令；群里还会附加「@我 使用」提示。
+未授权用户在私聊发 `/start` 会收到自己的 Chat ID，并提示发给管理员开通；其他未授权消息保持静默（日志记录）。`/help` 按角色差异化：管理员看到全部命令（含管理命令与 `/restart`），普通用户只看到日常命令；群组里 `/help` 只显示群组可用的精简列表。
 
 授权数据写入 settings 命名空间（与 GUI 卡片同一来源），TG 命令与 GUI 保存互相同步；访问类变更（授权列表/管理员/按钮归属开关）只更新运行中的 bridge，不重建轮询器（无 409、不丢进行中的回合）。Token/API 地址/超时等核心字段变更才重建。
 
 ### 多 agent（已实现）
 
-`agentPreset.list` 列出全部模式（标准模式 `standard` / PTC 模式 `code` / 极简模式 `minimal` / 创造模式 `cordis`，默认 `cordis`），`/mode` 在 TG 里用 `agentPreset.select` 切换当前会话的模式；`/sessions` 每行标注会话模式，`/rename` 用 `session.rename` 重命名当前会话。**模式名按语言显示**：英文用户看到模式 id（`standard`/`cordis`…），中文用户看到名称（标准模式/创造模式…）。
+`agentPreset.list` 列出全部模式（标准模式 `standard` / PTC 模式 `code` / 极简模式 `minimal` / 创造模式 `cordis`，默认 `cordis`），**`/use new` 创建会话时弹模式选择**（创建即定模式，`session.create` 带 `agentPreset`）；`/sessions` 每行标注会话模式，`/rename` 用 `session.rename` 重命名当前会话。**模式名按语言显示**：英文用户看到模式 id（`standard`/`cordis`…），中文用户看到名称（标准模式/创造模式…）。
 
-**限制**：DSH 规定**已开始过的会话模式固定**（`agent-preset-locked`），只能在空会话上切换。已开始的会话想换模式：`/use new` 新建会话（新会话是空会话，可立刻 `/mode` 选模式），或 `/use` 切到空会话后再 `/mode`。DSH 官方 API 也没有「删除会话」接口（apiproxy 无 `session.remove`），也没有会话分组/文件夹概念（`session.list` 无 group 字段，Web 端分组是前端 UI 行为）——TG 侧按「模式 + 来源（TG/Web）」维度展示分类。
+**限制**：DSH 规定**已开始过的会话模式固定**（`agent-preset-locked`），只能在空会话上切换——所以模式在 `/use new` 时一次选定。DSH 官方 API 也没有「删除会话」接口（apiproxy 无 `session.remove`），也没有会话分组/文件夹概念（`session.list` 无 group 字段，Web 端分组是前端 UI 行为）——TG 侧按「模式 + 来源（TG/Web）」维度展示分类。
 
 ## 平台兼容
 
