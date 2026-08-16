@@ -47,7 +47,7 @@ dsh web   # 或你的启动脚本
 | 字段 | 环境变量 | 必填 | 默认 | 说明 |
 |------|----------|------|------|------|
 | `botToken` | `TG_BOT_TOKEN` | ✅ | — | Telegram bot token（@BotFather） |
-| `allowedChat` | `TG_ALLOWED_CHAT` | ✅ | — | 允许的 chat id（单用户兼容写法） |
+| `allowedChat` | `TG_ALLOWED_CHAT` | | — | 允许的 chat id（旧版单用户写法；配置了 allowedUsers 可留空） |
 | `allowedUsers` | — | | `[]` | 多用户：`[{chatId, label}]`，每个 chat id 拥有独立的会话空间 |
 | `adminChatIds` | — | | `[]` | 管理员 chat id：可查看/操作所有用户的会话，可执行 `/restart` |
 | `askerRequired` | — | | `true` | 提问/审批按钮只能由发起者本人点击，群组里其他人点击会被拒绝 |
@@ -66,7 +66,7 @@ dsh web   # 或你的启动脚本
 |---|---|
 | `/start` | 在线检查 |
 | `/sessions` | 列出所有会话（标题 + 状态） |
-| `/use <编号\|ID\|new>` | 切换 / 新建会话 |
+| `/use <编号\|ID\|标题\|new>` | 切换 / 新建会话（标题关键字模糊匹配，多匹配列候选） |
 | `/models` | 列出模型 + 当前选择与推理强度 |
 | `/model <编号>` | 切换当前会话模型（保留推理强度） |
 | `/effort` | 按钮修改推理强度 |
@@ -86,7 +86,7 @@ agent 回复：文字即时转发、工具调用合并成单条实时进度（�
 
 ## GUI（插件配置页）
 
-包内自带持久 client 半部：设置 → 插件 → 插件配置 出现「Telegram 遥控 / Telegram Remote」双语卡片（跟随系统语言），可编辑 Bot Token（留空保持不变）、Allowed Chat ID、Allowed Users/Groups（每行 `chatId [label]`）、Admin Chat IDs（每行一个）、提问/审批按钮归属开关、Telegram API Base、Poll Timeout；保存即热重载，无需重启。重启后依然存在（无需重新激活）。
+包内自带持久 client 半部：设置 → 插件 → 插件配置 出现「Telegram 遥控 / Telegram Remote」双语卡片（跟随系统语言），可编辑 Bot Token（留空保持不变）、Allowed Users/Groups（每行 `chatId [label]`，即授权用户/群组）、Admin Chat IDs（每行一个）、提问/审批按钮归属开关、Telegram API Base、Poll Timeout；保存即热重载，无需重启。重启后依然存在（无需重新激活）。
 
 ## 模块结构
 
