@@ -1,2 +1,6 @@
 node_modules/
 *.log
+*.state.json
+.env
+.env.*
+cordis.patch.local.yml
