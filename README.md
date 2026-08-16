@@ -126,9 +126,9 @@ lib/client.js    持久 GUI 卡片（__ModuleLoader__ 格式，双语，重启�
 
 ### 多 agent（已实现）
 
-`agentPreset.list` 列出全部模式（标准模式 `standard` / PTC 模式 `code` / 极简模式 `minimal` / 创造模式 `cordis`，默认 `cordis`），`/mode` 在 TG 里用 `agentPreset.select` 实时切换当前会话的模式；`/sessions` 每行标注会话模式，`/rename` 用 `session.rename` 重命名当前会话。
+`agentPreset.list` 列出全部模式（标准模式 `standard` / PTC 模式 `code` / 极简模式 `minimal` / 创造模式 `cordis`，默认 `cordis`），`/mode` 在 TG 里用 `agentPreset.select` 切换当前会话的模式；`/sessions` 每行标注会话模式，`/rename` 用 `session.rename` 重命名当前会话。**模式名按语言显示**：英文用户看到模式 id（`standard`/`cordis`…），中文用户看到名称（标准模式/创造模式…）。
 
-**限制**：DSH 官方 API 目前没有「删除会话」接口（apiproxy 无 `session.remove`），也没有会话分组/文件夹概念（`session.list` 无 group 字段，Web 端分组是前端 UI 行为）——TG 侧按「模式 + 来源（TG/Web）」维度展示分类。删除会话需在部署侧处理，暂不提供。
+**限制**：DSH 规定**已开始过的会话模式固定**（`agent-preset-locked`），只能在空会话上切换。已开始的会话想换模式：`/use new` 新建会话（新会话是空会话，可立刻 `/mode` 选模式），或 `/use` 切到空会话后再 `/mode`。DSH 官方 API 也没有「删除会话」接口（apiproxy 无 `session.remove`），也没有会话分组/文件夹概念（`session.list` 无 group 字段，Web 端分组是前端 UI 行为）——TG 侧按「模式 + 来源（TG/Web）」维度展示分类。
 
 ## 平台兼容
 
