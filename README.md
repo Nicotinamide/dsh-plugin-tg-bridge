@@ -65,10 +65,13 @@ dsh web   # 或你的启动脚本
 | 命令 | 作用 |
 |---|---|
 | `/start` | 在线检查 |
-| `/sessions` | 列出所有会话（标题 + 状态） |
+| `/sessions` | 列出所有会话（标题 + 状态 + 模式；管理员含 Web 端会话并标来源） |
 | `/use <编号\|ID\|标题\|new>` | 切换 / 新建会话（标题关键字模糊匹配，多匹配列候选） |
 | `/models` | 列出模型 + 当前选择与推理强度 |
 | `/model <编号>` | 切换当前会话模型（保留推理强度） |
+| `/mode` | 查看当前会话模式（标准/创造/PTC/极简等） |
+| `/mode <编号\|id>` | 切换当前会话模式（`agentPreset.select`，新一轮生效） |
+| `/rename <新标题>` | 重命名当前会话（`session.rename`） |
 | `/effort` | 按钮修改推理强度 |
 | `/permission` | 按钮切换当前会话权限预设 |
 | `/permission default <name>` | 修改全局默认权限 |
@@ -121,9 +124,11 @@ lib/client.js    持久 GUI 卡片（__ModuleLoader__ 格式，双语，重启�
 
 授权数据写入 settings 命名空间（与 GUI 卡片同一来源），TG 命令与 GUI 保存互相同步；访问类变更（授权列表/管理员/按钮归属开关）只更新运行中的 bridge，不重建轮询器（无 409、不丢进行中的回合）。Token/API 地址/超时等核心字段变更才重建。
 
-### 多 agent（规划中）
+### 多 agent（已实现）
 
-`session.create({ agentPreset })` 支持每个会话挂不同 agent preset（内置 code / cordis / minimal / standard）；下一步可给不同用户分配不同 preset。
+`agentPreset.list` 列出全部模式（标准模式 `standard` / PTC 模式 `code` / 极简模式 `minimal` / 创造模式 `cordis`，默认 `cordis`），`/mode` 在 TG 里用 `agentPreset.select` 实时切换当前会话的模式；`/sessions` 每行标注会话模式，`/rename` 用 `session.rename` 重命名当前会话。
+
+**限制**：DSH 官方 API 目前没有「删除会话」接口（apiproxy 无 `session.remove`），也没有会话分组/文件夹概念（`session.list` 无 group 字段，Web 端分组是前端 UI 行为）——TG 侧按「模式 + 来源（TG/Web）」维度展示分类。删除会话需在部署侧处理，暂不提供。
 
 ## 平台兼容
 
