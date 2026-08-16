@@ -1,0 +1,39 @@
+{
+  "name": "dsh-plugin-tg-bridge",
+  "description": "DSH <-> Telegram bridge as a profile plugin: forward session activity, replies, and question/approval button flows to Telegram, with a persistent GUI card in 插件配置.",
+  "version": "0.1.0",
+  "type": "module",
+  "main": "lib/index.js",
+  "exports": {
+    ".": "./lib/index.js",
+    "./client": "./lib/client.js",
+    "./bridge": "./lib/bridge.js",
+    "./markdown": "./lib/markdown.js",
+    "./telegram": "./lib/telegram.js",
+    "./package.json": "./package.json"
+  },
+  "files": [
+    "lib",
+    "README.md",
+    "cordis.patch.yml"
+  ],
+  "license": "MIT",
+  "dependencies": {
+    "@deepseek-ai/dsh-settings": "^0.1.0-rc.6",
+    "@deepseek-ai/schemastery": "^0.1.0-rc.6",
+    "@deepseek-ai/dsh-home-paths": "^0.1.0-rc.6"
+  },
+  "dsh": {
+    "bundle": {
+      "patch": "./cordis.patch.yml"
+    },
+    "client": {
+      "platform": "web",
+      "inject": [
+        "@deepseek-ai/dsh-client-runtime",
+        "@deepseek-ai/dsh-client-locale"
+      ],
+      "immediately": true
+    }
+  }
+}

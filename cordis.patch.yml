@@ -1,0 +1,17 @@
+# dsh-plugin-tg-bridge bundle patch.
+#
+# When this package is listed in a profile's dsh.profile.bundles, this layer
+# inserts the tg-bridge row with no config; the user layer must then provide
+# the real configuration (botToken, allowedChat, ...):
+#
+#   - id: tg-bridge
+#     config:
+#       botToken: '<BOT_TOKEN>'
+#       allowedChat: '<CHAT_ID>'
+#
+# The row can also be added directly from a profile's own cordis.patch.yml
+# without bundling; see README.md.
+
+- insert:
+    - id: tg-bridge
+      name: 'dsh-plugin-tg-bridge'
