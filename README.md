@@ -63,8 +63,8 @@ dsh web   # 或你的启动脚本
 | `askerRequired` | — | | `true` | 提问/审批按钮只能由发起者本人点击，群组里其他人点击会被拒绝 |
 | `tgApiBase` | `TG_API_BASE` | | `https://api.telegram.org` | Bot API 基址（被墙时换成自己的代理） |
 | `pollTimeoutSeconds` | `TG_POLL_TIMEOUT_SECONDS` | | `25` | getUpdates 轮询超时；走代理建议 `2` |
-| `dshBaseUrl` | `TG_DSH_BASE_URL` | | `http://127.0.0.1:3080` | DSH 客户端 API 基址（bridge 与 DSH 同机时勿改） |
-| `muxUrl` | `TG_MUX_URL` | | `ws://127.0.0.1:3080/api/events.mux` | DSH 事件流 |
+| `dshBaseUrl` | `TG_DSH_BASE_URL` | | 自动检测 | DSH 客户端 API 基址；默认自动使用运行进程的实际端口（端口每次启动可能变化），显式配置（env/patch）优先 |
+| `muxUrl` | `TG_MUX_URL` | | 自动检测 | DSH 事件流地址；同样默认随实际端口自动推导，显式配置优先 |
 | `stateFile` | `TG_STATE_FILE` | | `$DSH_HOME/tg-bridge-state.json` | 状态持久化文件 |
 | `turnTimeoutMs` | `TG_TURN_TIMEOUT_MS` | | `600000` | 回合超时提醒 |
 | `tgTimeoutMs` | `TG_TG_TIMEOUT_MS` | | `30000` | Telegram API 超时 |
