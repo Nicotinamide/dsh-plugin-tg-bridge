@@ -6,18 +6,18 @@ DSH ↔ Telegram 遥控桥接，作为 Cordis profile 插件使用。
 
 ## 安装
 
-把本包放进目标机器的 profile 并注册一行：
+把本包放进目标机器的 profile 并注册一行（`$DSH_HOME` 默认 `~/.dsh`，即 `%USERPROFILE%\.dsh`）：
 
 ```bash
 # 1. 拷贝/软链到 profile 的 node_modules（等价于 pnpm add）
-ln -s /path/to/dsh-plugin-tg-bridge /root/.dsh/profiles/node_modules/dsh-plugin-tg-bridge
+ln -s /path/to/dsh-plugin-tg-bridge $DSH_HOME/profiles/node_modules/dsh-plugin-tg-bridge
 ```
 
 ## 配置（二选一，env 优先）
 
 ### 方式 A：cordis.patch.yml（推荐日常使用）
 
-在 `/root/.dsh/profiles/web/cordis.patch.yml` 追加：
+在 `<profile>/cordis.patch.yml`（默认 `$DSH_HOME/profiles/web/cordis.patch.yml`）追加：
 
 ```yaml
 - insert:
@@ -91,10 +91,15 @@ lib/telegram.js  Telegram Bot API 客户端（可配置代理基址）
 lib/client.js    持久 GUI 卡片（__ModuleLoader__ 格式，双语，重启不消失）
 ```
 
+## 平台兼容
+
+- **Linux / macOS**：完整支持。`/restart` 用纯 Node 看门狗重启（不依赖 bash），日志重定向到当前 stdout 目标或 `$DSH_HOME/dsh-web.log`。
+- **Windows 11**：核心功能（消息、按钮、会话、权限、模型、状态、GUI）可用。`/restart` 的看门狗同样是纯 Node（跨平台），但**依赖 dsh web 能从 `process.argv` 原样重建**——Windows 上请确认你的 dsh 启动方式支持；`loadavg()` 在 Windows 恒为 0（`/status` 负载显示 0，其余正常）。路径全部走 `$DSH_HOME`（`%USERPROFILE%\.dsh`），无硬编码绝对路径。
+
 ## 排障（踩过的坑）
 
 1. **409 Conflict / "terminated by other getUpdates request"**：同一 bot token 只能有一个轮询器。插件和独立脚本不能同时跑；也不要手工 curl getUpdates。日志里 `Conflict` 只在重启瞬间新旧进程重叠时出现一次，几秒后自愈。
 2. **代理长轮询（timeout≥25）会 self-conflict**：如果走代理，用 `pollTimeoutSeconds: 2` 短轮询。
-3. **`/restart` 不工作**：`/restart` 从当前进程的启动参数重建命令（`node /usr/local/bin/dsh ...`）拉起看门狗重启，零配置；若用非标准方式启动 dsh（如容器 supervisor），需自行确认进程能被该命令重建。
+3. **`/restart` 不工作**：`/restart` 从当前进程的启动参数重建命令（`node <dsh-bin> ...`）拉起看门狗重启，零配置；若用非标准方式启动 dsh（如容器 supervisor），需自行确认进程能被该命令重建。
 4. **`/permission` 报"权限服务不可用"**：host 未注入 `permissionPresets`/`sessions`（base 层已含，正常不会出现）。
 5. **GUI 卡片不显示**：确认 `dsh.client` 声明和 `exports["./client"]` 存在，重启 dsh web 后 client-modules 自动扫描加载。
