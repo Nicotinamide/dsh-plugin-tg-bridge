@@ -87,7 +87,7 @@ agent 回复：文字即时转发、工具调用合并成单条实时进度（�
 
 ## GUI（插件配置页）
 
-包内自带持久 client 半部：设置 → 插件 → 插件配置 出现「Telegram 遥控 / Telegram Remote」双语卡片（跟随系统语言），可编辑 Bot Token（留空保持不变）、Allowed Users/Groups（每行一个 `chatId`，即授权用户/群组）、Admin Chat IDs（每行一个）、提问/审批按钮归属开关、Telegram API Base、Poll Timeout；保存即热重载，无需重启。重启后依然存在（无需重新激活）。
+包内自带持久 client 半部：设置 → 插件 → 插件配置 出现「Telegram 遥控 / Telegram Remote」双语卡片（跟随系统语言），可编辑 Bot Token（留空保持不变）、Allowed Users/Groups（每行一个 `chatId`，即授权用户/群组）、Admin Chat IDs（每行一个）、提问/审批按钮归属开关、Telegram API Base、Poll Timeout；保存即热重载，无需重启。重启后依然存在（无需重新激活）。注意：GUI 列表字段**留空保存不会清空**已有条目（与 token 的"留空不变"一致）——移除授权请在 TG 用 `/revoke`。
 
 ## 模块结构
 
