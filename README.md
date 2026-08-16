@@ -13,6 +13,16 @@ DSH ↔ Telegram 遥控桥接，作为 Cordis profile 插件使用。
 ln -s /path/to/dsh-plugin-tg-bridge $DSH_HOME/profiles/node_modules/dsh-plugin-tg-bridge
 ```
 
+### 从 GitHub 安装
+
+```bash
+# 克隆到目标机器
+git clone https://github.com/<你的用户名>/dsh-plugin-tg-bridge.git
+cd dsh-plugin-tg-bridge && npm install          # 拉取运行时依赖
+ln -s "$PWD" $DSH_HOME/profiles/node_modules/dsh-plugin-tg-bridge
+# 然后在 <profile>/cordis.patch.yml 注册一行（见下）
+```
+
 ## 配置（二选一，env 优先）
 
 ### 方式 A：cordis.patch.yml（推荐日常使用）
