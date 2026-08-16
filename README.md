@@ -48,7 +48,7 @@ dsh web   # 或你的启动脚本
 |------|----------|------|------|------|
 | `botToken` | `TG_BOT_TOKEN` | ✅ | — | Telegram bot token（@BotFather） |
 | `allowedChat` | `TG_ALLOWED_CHAT` | | — | 允许的 chat id（旧版单用户写法；配置了 allowedUsers 可留空） |
-| `allowedUsers` | — | | `[]` | 多用户：`[{chatId, label}]`，每个 chat id 拥有独立的会话空间 |
+| `allowedUsers` | — | | `[]` | 多用户：`[{chatId, label?}]`，每个 chat id 拥有独立的会话空间；`label` 仅为可选备注（显示名默认取 Telegram 真实名称，无需配置） |
 | `adminChatIds` | — | | `[]` | 管理员 chat id：可查看/操作所有用户的会话，可执行 `/restart` |
 | `askerRequired` | — | | `true` | 提问/审批按钮只能由发起者本人点击，群组里其他人点击会被拒绝 |
 | `tgApiBase` | `TG_API_BASE` | | `https://api.telegram.org` | Bot API 基址（被墙时换成自己的代理） |
@@ -77,7 +77,6 @@ dsh web   # 或你的启动脚本
 | `/grant <chatId> [label]` | 添加用户/群组（仅管理员；群里直接 `/grant` 授权当前群） |
 | `/revoke <chatId>` | 移除授权（仅管理员） |
 | `/admin [off] <chatId>` | 设置/取消管理员（仅管理员；设为管理员会自动授权） |
-| `/label <chatId> <名称>` | 设置/清除显示名（仅管理员；不写名称则清除） |
 | `/restart` | 远程重启 DSH web（仅管理员；按启动参数自动重建命令，零配置；重启后自动汇报状态） |
 | `/help` | 命令列表（按角色差异化：管理员看到全部命令，普通用户只看到日常命令） |
 
@@ -113,9 +112,8 @@ lib/client.js    持久 GUI 卡片（__ModuleLoader__ 格式，双语，重启�
 
 第一个管理员在配置文件 `adminChatIds` 里指定；之后管理员可以全程在 TG 里管理授权，无需再改配置：
 
-- `/users` 查看授权列表（管理员 🛡 / 普通用户 👤；每行自动补全真实显示名——私聊 `@用户名`/名字、群组群名，配置的 label 优先显示）；
+- `/users` 查看授权列表（管理员 🛡 / 普通用户 👤；显示名默认取 Telegram 真实名称——私聊 `@用户名`/名字、群组群名，无需手动维护）；
 - `/grant <chatId> [label]` 添加用户或群组；在群里直接 `/grant` 授权当前群；群组会自动拉取群名当 label；
-- `/label <chatId> <名称>` 手动设置/清除显示名（不写名称则清除）；
 - `/revoke <chatId>` 移除授权（不能移除自己或最后一个管理员，防止锁死）；
 - `/admin [off] <chatId>` 设置/取消管理员（设为管理员会自动授权该 chat）。
 
