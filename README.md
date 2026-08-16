@@ -74,7 +74,7 @@ dsh web   # 或你的启动脚本
 | `/permission default <name>` | 修改全局默认权限 |
 | `/status` | 在线状态、token、缓存、上下文占用、回合统计 |
 | `/users` | 授权列表（仅管理员） |
-| `/grant <chatId> [label]` | 添加用户/群组（仅管理员；群里直接 `/grant` 授权当前群） |
+| `/grant <chatId>` | 添加用户/群组（仅管理员；群里直接 `/grant` 授权当前群） |
 | `/revoke <chatId>` | 移除授权（仅管理员） |
 | `/admin [off] <chatId>` | 设置/取消管理员（仅管理员；设为管理员会自动授权） |
 | `/restart` | 远程重启 DSH web（仅管理员；按启动参数自动重建命令，零配置；重启后自动汇报状态） |
@@ -86,7 +86,7 @@ agent 回复：文字即时转发、工具调用合并成单条实时进度（�
 
 ## GUI（插件配置页）
 
-包内自带持久 client 半部：设置 → 插件 → 插件配置 出现「Telegram 遥控 / Telegram Remote」双语卡片（跟随系统语言），可编辑 Bot Token（留空保持不变）、Allowed Users/Groups（每行 `chatId [label]`，即授权用户/群组）、Admin Chat IDs（每行一个）、提问/审批按钮归属开关、Telegram API Base、Poll Timeout；保存即热重载，无需重启。重启后依然存在（无需重新激活）。
+包内自带持久 client 半部：设置 → 插件 → 插件配置 出现「Telegram 遥控 / Telegram Remote」双语卡片（跟随系统语言），可编辑 Bot Token（留空保持不变）、Allowed Users/Groups（每行一个 `chatId`，即授权用户/群组）、Admin Chat IDs（每行一个）、提问/审批按钮归属开关、Telegram API Base、Poll Timeout；保存即热重载，无需重启。重启后依然存在（无需重新激活）。
 
 ## 模块结构
 
@@ -113,7 +113,7 @@ lib/client.js    持久 GUI 卡片（__ModuleLoader__ 格式，双语，重启�
 第一个管理员在配置文件 `adminChatIds` 里指定；之后管理员可以全程在 TG 里管理授权，无需再改配置：
 
 - `/users` 查看授权列表（管理员 🛡 / 普通用户 👤；显示名默认取 Telegram 真实名称——私聊 `@用户名`/名字、群组群名，无需手动维护）；
-- `/grant <chatId> [label]` 添加用户或群组；在群里直接 `/grant` 授权当前群；群组会自动拉取群名当 label；
+- `/grant <chatId>` 添加用户或群组；在群里直接 `/grant` 授权当前群；群组会自动记录群名作内部备注（会话标题/兜底显示用），显示名以 Telegram 实时名称为准；
 - `/revoke <chatId>` 移除授权（不能移除自己或最后一个管理员，防止锁死）；
 - `/admin [off] <chatId>` 设置/取消管理员（设为管理员会自动授权该 chat）。
 
