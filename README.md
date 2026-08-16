@@ -47,7 +47,10 @@ dsh web   # 或你的启动脚本
 | 字段 | 环境变量 | 必填 | 默认 | 说明 |
 |------|----------|------|------|------|
 | `botToken` | `TG_BOT_TOKEN` | ✅ | — | Telegram bot token（@BotFather） |
-| `allowedChat` | `TG_ALLOWED_CHAT` | ✅ | — | 允许的 chat id，其他一律忽略 |
+| `allowedChat` | `TG_ALLOWED_CHAT` | ✅ | — | 允许的 chat id（单用户兼容写法） |
+| `allowedUsers` | — | | `[]` | 多用户：`[{chatId, label}]`，每个 chat id 拥有独立的会话空间 |
+| `adminChatIds` | — | | `[]` | 管理员 chat id：可查看/操作所有用户的会话，可执行 `/restart` |
+| `askerRequired` | — | | `true` | 提问/审批按钮只能由发起者本人点击，群组里其他人点击会被拒绝 |
 | `tgApiBase` | `TG_API_BASE` | | `https://api.telegram.org` | Bot API 基址（被墙时换成自己的代理） |
 | `pollTimeoutSeconds` | `TG_POLL_TIMEOUT_SECONDS` | | `25` | getUpdates 轮询超时；走代理建议 `2` |
 | `dshBaseUrl` | `TG_DSH_BASE_URL` | | `http://127.0.0.1:3080` | DSH 客户端 API 基址（bridge 与 DSH 同机时勿改） |
@@ -75,7 +78,7 @@ dsh web   # 或你的启动脚本
 
 普通消息发给 agent；**引用回复**会把被引用的原消息一并带给 agent（`[引用回复]... [新消息]...`）。
 
-agent 回复：文字即时转发、工具调用合并成单条实时进度（回合结束自动删除）、期间显示"正在输入…"、`approval/requested` 与 `question/requested` 变成可点按钮。
+agent 回复：文字即时转发、工具调用合并成单条实时进度（回合结束自动删除）、期间显示"正在输入…"、`approval/requested` 与 `question/requested` 变成可点按钮。按钮默认**只有发起者本人能点**：群组里其他人点击只会收到"⚠️ 只有提问者可以回答本题"提示，答案不会提交、状态不变（`askerRequired: false` 可关闭校验）。
 
 ## GUI（插件配置页）
 
@@ -91,33 +94,19 @@ lib/telegram.js  Telegram Bot API 客户端（可配置代理基址）
 lib/client.js    持久 GUI 卡片（__ModuleLoader__ 格式，双语，重启不消失）
 ```
 
-## 当前限制与演进方向
+## 当前能力与演进方向
 
-### 当前架构（v0.1）
+### 多用户（已实现）
 
-**一个 bot → 一个允许的 chat → 一个 DSH 会话**。`botToken` / `allowedChat` / `state.sessionId` 三者固定绑定：
+一个 bot 服务多个 chat：`allowedUsers` 列出允许的 chat id（`label` 仅作显示），每个 chat 有自己独立的会话空间（`perUserSessions`）；管理员 `adminChatIds` 能看到/操作所有用户的会话。群组（chat id 为负）同样支持：只响应 @bot 提及或回复 bot 的消息，忽略 bot 自己的消息，群组整体绑定自己的会话空间。
 
-| 能力 | 现状 |
-|---|---|
-| 多机器人（多个 botToken） | ❌ 仅一个 bot |
-| 多用户（多个 chat id） | ❌ 只认 `allowedChat` 一个 chat，其他消息被忽略 |
-| 多 agent（不同 preset） | ❌ 单会话；`/use` 切换的是同一 bot 下不同 session，非不同 agent |
-| 群组 | ❌ 群组 chat id（负数）被忽略，未处理 @提及 / 防自触发 |
+### 按钮归属（已实现）
 
-**已支持的区分**：`/use` 在多个 DSH session 间切换（同一时刻服务一个）；`/permission`、`/effort`、`/model` 作用于当前会话；引用回复、按钮审批、消息转发均在唯一 chat 内。
+提问/审批按钮按 `chatId` + 消息 id 精确定位（避免不同 chat 消息 id 撞号）。默认 `askerRequired: true`：按钮只能由发起该轮的用户点击，群组里其他成员点击只会收到"只有提问者可以回答本题"提示，不提交答案、不改变状态。Web 端发起的轮次不产生按钮，因此有按钮必有归属人；若因升级/重启导致归属人丢失，私聊（单用户）信任点击者，群组拒绝。
 
-### 演进方案（未实现，规划中）
+### 多 agent（规划中）
 
-**多用户 / 多 agent 的两种架构**：
-
-- **方案 A：一个 bot 服务多 chat（内部路由）**——按 `chat_id` 路由到各自的会话和 agent preset。体验是"都加同一个 bot"，但需重构核心（`allowedChat` 单值 → `allowedChats` 映射、`state.sessionId` 单会话 → per-chat 映射、mux 按 session 反查 chat），改动面大（约 80 处）。
-- **方案 B：每用户一个 bot（多实例）**——`instances: [{ botToken, allowedChat, agentPreset }]`，每个 bot 独立轮询、独立状态文件、独立会话。隔离好、无 409 冲突、可给每个用户专属 agent bot；改动小（index.js 循环创建 + stateFile 区分 + `session.create` 传 `agentPreset`）。
-
-两者皆以 DSH 原生能力为基：`session.create({ agentPreset })` 支持每个会话挂不同 agent preset（内置 code / cordis / minimal / standard）。
-
-### 群组支持（未实现）
-
-需处理：群组 chat id 为负数；仅响应 @bot 提及或回复 bot 的消息（避免回应群里所有消息）；忽略 bot 自己的消息（防自触发）；群组整体绑定一个会话或按用户分会话。
+`session.create({ agentPreset })` 支持每个会话挂不同 agent preset（内置 code / cordis / minimal / standard）；下一步可给不同用户分配不同 preset。
 
 ## 平台兼容
 
