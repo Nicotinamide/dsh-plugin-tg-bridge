@@ -20,7 +20,7 @@
   "license": "MIT",
   "dependencies": {
     "@deepseek-ai/dsh-settings": "^0.1.0-rc.6",
-    "@deepseek-ai/schemastery": "^0.1.0-rc.6",
+    "@deepseek-ai/schemastery": "^3.18.1",
     "@deepseek-ai/dsh-home-paths": "^0.1.0-rc.6"
   },
   "dsh": {

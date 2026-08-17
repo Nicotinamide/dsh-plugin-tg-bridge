@@ -6,22 +6,29 @@ DSH ↔ Telegram 遥控桥接，作为 Cordis profile 插件使用。
 
 ## 安装
 
-把本包放进目标机器的 profile 并注册一行（`$DSH_HOME` 默认 `~/.dsh`，即 `%USERPROFILE%\.dsh`）：
+**前置**：一台已运行 DSH（`dsh web`）的机器（本插件是 DSH 的 Cordis profile 插件，不是独立程序）。`$DSH_HOME` 默认 `~/.dsh`（即 `%USERPROFILE%\.dsh`）。
+
+### 从 GitHub 安装（推荐分享方式）
 
 ```bash
-# 1. 拷贝/软链到 profile 的 node_modules（等价于 pnpm add）
+# 1. 克隆到目标机器
+git clone https://github.com/Nicotinamide/dsh-plugin-tg-bridge.git
+cd dsh-plugin-tg-bridge
+# 2. 安装运行时依赖（已发布到公共 npm，可正常 install）
+npm install
+# 3. 软链到 profile 的 node_modules（等价于 pnpm add）
+ln -s "$PWD" $DSH_HOME/profiles/node_modules/dsh-plugin-tg-bridge
+# 4. 注册插件行（见下方「方式 A」的 cordis.patch.yml 示例）
+# 5. 重启 dsh web
+```
+
+### 本地已有源码（直接软链）
+
+```bash
 ln -s /path/to/dsh-plugin-tg-bridge $DSH_HOME/profiles/node_modules/dsh-plugin-tg-bridge
 ```
 
-### 从 GitHub 安装
-
-```bash
-# 克隆到目标机器
-git clone https://github.com/<你的用户名>/dsh-plugin-tg-bridge.git
-cd dsh-plugin-tg-bridge && npm install          # 拉取运行时依赖
-ln -s "$PWD" $DSH_HOME/profiles/node_modules/dsh-plugin-tg-bridge
-# 然后在 <profile>/cordis.patch.yml 注册一行（见下）
-```
+> 依赖说明：`@deepseek-ai/dsh-settings`、`dsh-home-paths`（`^0.1.0-rc.6`）与 `@deepseek-ai/schemastery`（`^3.18.1`）均已发布到公共 npm；如果机器无法访问 npm registry，也可直接依赖 DSH 环境自带的包（软链插件后不装依赖同样可用，DSH 的 `profiles/node_modules` 已包含它们）。
 
 ## 配置（二选一，env 优先）
 
