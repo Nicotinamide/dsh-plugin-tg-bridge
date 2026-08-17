@@ -8,27 +8,48 @@ DSH ↔ Telegram 遥控桥接，作为 Cordis profile 插件使用。
 
 **前置**：一台已运行 DSH（`dsh web`）的机器（本插件是 DSH 的 Cordis profile 插件，不是独立程序）。`$DSH_HOME` 默认 `~/.dsh`（即 `%USERPROFILE%\.dsh`）。
 
-### 从 GitHub 安装（推荐分享方式）
+插件以**自包含单文件**发布：`dist/index.js` 已把插件本体和全部运行时依赖（schemastery 等）用 esbuild 打进一个文件，**安装时不需要在插件目录里跑 `npm install`**——`dsh plugin add` / 软链之后即可直接加载。这就是对 `ERR_MODULE_NOT_FOUND` 的根治：`dsh plugin add` 只做软链 + bundle 注册，不会安装插件自己的依赖，所以运行时依赖必须跟插件一起打包。
+
+### 方式 1：`dsh plugin add`（推荐）
 
 ```bash
-# 1. 克隆到目标机器
-git clone https://github.com/Nicotinamide/dsh-plugin-tg-bridge.git
-cd dsh-plugin-tg-bridge
-# 2. 安装运行时依赖（已发布到公共 npm，可正常 install）
-npm install
-# 3. 软链到 profile 的 node_modules（等价于 pnpm add）
-ln -s "$PWD" $DSH_HOME/profiles/node_modules/dsh-plugin-tg-bridge
-# 4. 注册插件行（见下方「方式 A」的 cordis.patch.yml 示例）
-# 5. 重启 dsh web
+dsh plugin add <路径或URL>   # 例如克隆下来的本地目录，或
+dsh plugin add https://github.com/Nicotinamide/dsh-plugin-tg-bridge.git
 ```
 
-### 本地已有源码（直接软链）
+`dsh plugin add` 会在 `$DSH_HOME/profiles` 里 `pnpm add` 并自动注册 bundle 层；随后把插件行写进 profile 的 `cordis.patch.yml`（见「配置」）并重启 dsh web。
+
+### 方式 2：手动软链（等价于 pnpm link）
 
 ```bash
+# Linux / macOS
 ln -s /path/to/dsh-plugin-tg-bridge $DSH_HOME/profiles/node_modules/dsh-plugin-tg-bridge
 ```
 
-> 依赖说明：`@deepseek-ai/dsh-settings`、`dsh-home-paths`（`^0.1.0-rc.6`）与 `@deepseek-ai/schemastery`（`^3.18.1`）均已发布到公共 npm；如果机器无法访问 npm registry，也可直接依赖 DSH 环境自带的包（软链插件后不装依赖同样可用，DSH 的 `profiles/node_modules` 已包含它们）。
+```powershell
+# Windows（管理员 PowerShell；或直接改用方式 1）
+New-Item -ItemType Junction -Path "$env:USERPROFILE\.dsh\profiles\node_modules\dsh-plugin-tg-bridge" -Target C:\path\to\dsh-plugin-tg-bridge
+```
+
+### 从源码开发
+
+```bash
+git clone https://github.com/Nicotinamide/dsh-plugin-tg-bridge.git
+cd dsh-plugin-tg-bridge
+npm install    # 只需开发依赖（esbuild、schemastery）
+npm run build  # 改完 lib/ 后重新生成 dist/index.js（dist 已提交，普通安装无需构建）
+```
+
+### Windows 从零安装（新机器）
+
+```powershell
+# 0) 安装 Node.js LTS（https://nodejs.org）；国内加速建议先切镜像
+npm config set registry https://registry.npmmirror.com
+# 1) 全局安装 dsh（比 npx 快：npx 每次都要现场下载整套依赖树，主包虽只有 ~110KB）
+npm install -g @deepseek-ai/dsh
+dsh web        # 首次初始化 profile，确认能打开 Web 界面（端口以启动日志为准）
+# 2) 把本插件 clone/拷贝到本机，按「方式 1 或 2」链接，写入 cordis.patch.yml，重启 dsh web
+```
 
 ## 配置（二选一，env 优先）
 
@@ -109,11 +130,14 @@ agent 回复：文字即时转发、工具调用合并成单条实时进度（�
 ## 模块结构
 
 ```
-lib/index.js     插件入口：官方模板 + settings 命名空间 + /api/tg-bridge/config HTTP 端点（信任校验 + token 打码）
-lib/bridge.js    核心：轮询队列 + mux 事件 + 按钮回传 + 会话/权限/模型命令 + 状态持久化 + 远程重启
-lib/markdown.js  Markdown -> MarkdownV2 转换（表格/标题/代码/转义/回退）
-lib/telegram.js  Telegram Bot API 客户端（可配置代理基址）
-lib/client.js    持久 GUI 卡片（__ModuleLoader__ 格式，双语，重启不消失）
+dist/index.js     发布入口：esbuild 自包含打包（插件 + schemastery 等依赖内联，安装零依赖）
+lib/index.js      插件入口源码：官方模板 + settings 命名空间 + /api/tg-bridge/config HTTP 端点（信任校验 + token 打码）
+lib/bridge.js     核心：轮询队列 + mux 事件 + 按钮回传 + 会话/权限/模型命令 + 状态持久化 + 远程重启
+lib/markdown.js   Markdown -> MarkdownV2 转换（表格/标题/代码/转义/回退）
+lib/telegram.js   Telegram Bot API 客户端（可配置代理基址）
+lib/client.js     持久 GUI 卡片（__ModuleLoader__ 格式，双语，重启不消失）
+lib/settings-local.js  vendored：installSettingsSection/settingsNamespace（避免把 cordis 打进 bundle）
+lib/home-local.js     vendored：dshHomePath（省掉 dsh-home-paths 依赖）
 ```
 
 ## 当前能力与演进方向
@@ -152,8 +176,9 @@ lib/client.js    持久 GUI 卡片（__ModuleLoader__ 格式，双语，重启�
 
 ## 排障（踩过的坑）
 
-1. **409 Conflict / "terminated by other getUpdates request"**：同一 bot token 只能有一个轮询器。插件和独立脚本不能同时跑；也不要手工 curl getUpdates。日志里 `Conflict` 只在重启瞬间新旧进程重叠时出现一次，几秒后自愈。
-2. **代理长轮询（timeout≥25）会 self-conflict**：如果走代理，用 `pollTimeoutSeconds: 2` 短轮询。
-3. **`/restart` 不工作**：`/restart` 从当前进程的启动参数重建命令（`node <dsh-bin> ...`）拉起看门狗重启，零配置；若用非标准方式启动 dsh（如容器 supervisor），需自行确认进程能被该命令重建。
-4. **`/permission` 报"权限服务不可用"**：host 未注入 `permissionPresets`/`sessions`（base 层已含，正常不会出现）。
-5. **GUI 卡片不显示**：确认 `dsh.client` 声明和 `exports["./client"]` 存在，重启 dsh web 后 client-modules 自动扫描加载。
+1. **`ERR_MODULE_NOT_FOUND: @deepseek-ai/dsh-settings`（旧版）**：`dsh plugin add` / 软链只做链接和 bundle 注册，**不会安装插件自己的依赖**。v0.1.1 起运行时依赖全部打进 `dist/index.js`，安装不再需要 `npm install`；升级后确认链接的包是以 `dist/index.js` 为入口（`require('<包名>/package.json').main`）。
+2. **409 Conflict / "terminated by other getUpdates request"**：同一 bot token 只能有一个轮询器。插件和独立脚本不能同时跑；也不要手工 curl getUpdates。日志里 `Conflict` 只在重启瞬间新旧进程重叠时出现一次，几秒后自愈。
+3. **代理长轮询（timeout≥25）会 self-conflict**：如果走代理，用 `pollTimeoutSeconds: 2` 短轮询。
+4. **`/restart` 不工作**：`/restart` 从当前进程的启动参数重建命令（`node <dsh-bin> ...`）拉起看门狗重启，零配置；若用非标准方式启动 dsh（如容器 supervisor），需自行确认进程能被该命令重建。
+5. **`/permission` 报"权限服务不可用"**：host 未注入 `permissionPresets`/`sessions`（base 层已含，正常不会出现）。
+6. **GUI 卡片不显示**：确认 `dsh.client` 声明和 `exports["./client"]` 存在，重启 dsh web 后 client-modules 自动扫描加载。
